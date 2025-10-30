@@ -30,6 +30,9 @@ jobs:
           docker push devopsregistry2025.azurecr.io/myapp:v1
 
       - name: Run Ansible Playbook
+        env:
+          ACR_USERNAME: ${{ secrets.AZURE_ACR_USERNAME }}
+          ACR_PASSWORD: ${{ secrets.AZURE_ACR_PASSWORD }}
         run: |
           sudo apt-get update
           sudo apt-get install ansible -y

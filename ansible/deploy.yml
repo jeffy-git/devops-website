@@ -2,15 +2,16 @@
 - name: Deploy Nginx Web App
   hosts: localhost
   become: true
+
   tasks:
     - name: Log in to Azure Container Registry
       ansible.builtin.command:
-        cmd: docker login ***.azurecr.io -u ${{ secrets.ACR_USERNAME }} -p ${{ secrets.ACR_PASSWORD }}
+        cmd: docker login devopsregistry2025.azurecr.io -u "{{ lookup('env', 'ACR_USERNAME') }}" -p "{{ lookup('env', 'ACR_PASSWORD') }}"
 
     - name: Pull Docker image from Azure Container Registry
       ansible.builtin.command:
-        cmd: docker pull ***.azurecr.io/myapp:v1
+        cmd: docker pull devopsregistry2025.azurecr.io/myapp:v1
 
     - name: Run Docker container
       ansible.builtin.command:
-        cmd: docker run -d -p 80:80 ***.azurecr.io/myapp:v1
+        cmd: docker run -d -p 80:80 devopsregistry2025.azurecr.io/myapp:v1
