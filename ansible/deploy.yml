@@ -5,7 +5,7 @@
   tasks:
     - name: Log in to Azure Container Registry
       ansible.builtin.command:
-        cmd: docker login ***.azurecr.io -u ${{ secrets.AZURE_ACR_USERNAME }} -p ${{ secrets.AZURE_ACR_PASSWORD }}
+        cmd: docker login ***.azurecr.io -u ${{ secrets.ACR_USERNAME }} -p ${{ secrets.ACR_PASSWORD }}
 
     - name: Pull Docker image from Azure Container Registry
       ansible.builtin.command:
