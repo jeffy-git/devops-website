@@ -1,0 +1,13 @@
+# Ignore Terraform files and directories
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Ignore provider binaries
+*.exe
+
+# Ignore VS Code stuff
+.vscode/
+
+# Node / build junk (just in case)
+node_modules/

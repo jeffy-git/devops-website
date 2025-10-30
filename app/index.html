@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Particle Pomodoro Timer v1.0</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        overflow: hidden;
+        background: #0a0e27;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1;
+      }
+
+      .timer-container {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .timer-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 30px;
+        padding: 50px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .version {
+        color: #64ffda;
+        font-size: 12px;
+        margin-bottom: 10px;
+        opacity: 0.8;
+      }
+
+      h1 {
+        color: white;
+        font-size: 32px;
+        margin-bottom: 10px;
+      }
+
+      .mode-display {
+        color: #a78bfa;
+        font-size: 18px;
+        margin-bottom: 30px;
+        font-weight: 600;
+      }
+
+      .timer-display {
+        font-size: 96px;
+        font-weight: bold;
+        color: white;
+        margin: 30px 0;
+        font-family: "Courier New", monospace;
+        text-shadow: 0 0 30px rgba(100, 255, 218, 0.5);
+      }
+
+      .timer-display.work {
+        color: #64ffda;
+      }
+
+      .timer-display.break {
+        color: #f472b6;
+      }
+
+      .controls {
+        display: flex;
+        gap: 15px;
+        margin: 30px 0;
+      }
+
+      button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 15px 30px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: all 0.3s;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      button.secondary {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .settings {
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .setting-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin: 15px 0;
+        color: white;
+      }
+
+      .setting-group label {
+        min-width: 120px;
+        text-align: right;
+        font-size: 14px;
+      }
+
+      input[type="number"] {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 8px;
+        width: 80px;
+        font-size: 14px;
+      }
+
+      input[type="number"]:focus {
+        outline: none;
+        border-color: #64ffda;
+      }
+
+      .stats {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 15px;
+        color: white;
+        z-index: 10;
+        min-width: 200px;
+      }
+
+      .stats h3 {
+        color: #64ffda;
+        margin-bottom: 15px;
+        font-size: 16px;
+      }
+
+      .stat-item {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0;
+        font-size: 14px;
+      }
+
+      .stat-value {
+        color: #64ffda;
+        font-weight: bold;
+      }
+
+      .progress-ring {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 5;
+      }
+
+      .progress-ring circle {
+        fill: none;
+        stroke-width: 8;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+      }
+
+      .progress-bg {
+        stroke: rgba(255, 255, 255, 0.1);
+      }
+
+      .progress-bar {
+        stroke: #64ffda;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.5s ease;
+      }
+
+      .particle-controls {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px;
+        border-radius: 12px;
+        color: white;
+        z-index: 10;
+      }
+
+      .particle-controls button {
+        padding: 8px 15px;
+        font-size: 12px;
+        margin-top: 10px;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.6;
+        }
+      }
+
+      .pulsing {
+        animation: pulse 2s infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <svg class="progress-ring" width="400" height="400">
+      <circle class="progress-bg" cx="200" cy="200" r="180" />
+      <circle
+        class="progress-bar"
+        cx="200"
+        cy="200"
+        r="180"
+        id="progressCircle"
+      />
+    </svg>
+
+    <div class="timer-container">
+      <div class="timer-card">
+        <div class="version">v1.0.0</div>
+        <h1>🍅 Pomodoro Timer</h1>
+        <div class="mode-display" id="modeDisplay">Work Session</div>
+
+        <div class="timer-display work" id="timerDisplay">25:00</div>
+
+        <div class="controls">
+          <button id="startBtn" onclick="startTimer()">▶️ Start</button>
+          <button id="pauseBtn" onclick="pauseTimer()" style="display: none">
+            ⏸️ Pause
+          </button>
+          <button class="secondary" onclick="resetTimer()">↻ Reset</button>
+        </div>
+
+        <div class="settings">
+          <div class="setting-group">
+            <label>Work Time:</label>
+            <input type="number" id="workTime" value="25" min="1" max="60" />
+            min
+          </div>
+          <div class="setting-group">
+            <label>Break Time:</label>
+            <input type="number" id="breakTime" value="5" min="1" max="30" />
+            min
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <h3>📊 Session Stats</h3>
+      <div class="stat-item">
+        <span>Completed:</span>
+        <span class="stat-value" id="completedCount">0</span>
+      </div>
+      <div class="stat-item">
+        <span>Total Focus:</span>
+        <span class="stat-value" id="totalTime">0m</span>
+      </div>
+      <div class="stat-item">
+        <span>Current Streak:</span>
+        <span class="stat-value" id="streak">0</span>
+      </div>
+    </div>
+
+    <div class="particle-controls">
+      <button onclick="toggleParticles()">✨ Toggle Particles</button>
+    </div>
+
+    <script>
+      // Particle System
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      let particles = [];
+      let particlesEnabled = true;
+      const particleCount = 80;
+      const connectionDistance = 120;
+
+      class Particle {
+        constructor() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.vx = (Math.random() - 0.5) * 1;
+          this.vy = (Math.random() - 0.5) * 1;
+          this.radius = Math.random() * 2 + 1;
+        }
+
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+          if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+          this.x = Math.max(0, Math.min(canvas.width, this.x));
+          this.y = Math.max(0, Math.min(canvas.height, this.y));
+        }
+
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = timerState.isBreak ? "#f472b6" : "#64ffda";
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = timerState.isBreak ? "#f472b6" : "#64ffda";
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      function initParticles() {
+        particles = [];
+        for (let i = 0; i < particleCount; i++) {
+          particles.push(new Particle());
+        }
+      }
+
+      function connectParticles() {
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < connectionDistance) {
+              const opacity = (1 - dist / connectionDistance) * 0.3;
+              ctx.beginPath();
+              ctx.strokeStyle = timerState.isBreak
+                ? `rgba(244, 114, 182, ${opacity})`
+                : `rgba(100, 255, 218, ${opacity})`;
+              ctx.lineWidth = opacity * 2;
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.stroke();
+            }
+          }
+        }
+      }
+
+      function animateParticles() {
+        ctx.fillStyle = "rgba(10, 14, 39, 0.1)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (particlesEnabled) {
+          particles.forEach((p) => {
+            p.update();
+            p.draw();
+          });
+          connectParticles();
+        }
+
+        requestAnimationFrame(animateParticles);
+      }
+
+      function toggleParticles() {
+        particlesEnabled = !particlesEnabled;
+      }
+
+      // Timer Logic
+      let timerState = {
+        workTime: 25 * 60,
+        breakTime: 5 * 60,
+        timeRemaining: 25 * 60,
+        isRunning: false,
+        isBreak: false,
+        completed: 0,
+        totalFocusTime: 0,
+        streak: 0,
+      };
+
+      let timerInterval;
+
+      function updateDisplay() {
+        const minutes = Math.floor(timerState.timeRemaining / 60);
+        const seconds = timerState.timeRemaining % 60;
+        document.getElementById("timerDisplay").textContent = `${String(
+          minutes
+        ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+        const display = document.getElementById("timerDisplay");
+        display.className = timerState.isBreak
+          ? "timer-display break"
+          : "timer-display work";
+
+        document.getElementById("modeDisplay").textContent = timerState.isBreak
+          ? "☕ Break Time"
+          : "💼 Work Session";
+
+        updateProgress();
+      }
+
+      function updateProgress() {
+        const circle = document.getElementById("progressCircle");
+        const radius = 180;
+        const circumference = 2 * Math.PI * radius;
+        const maxTime = timerState.isBreak
+          ? timerState.breakTime
+          : timerState.workTime;
+        const progress = timerState.timeRemaining / maxTime;
+        const offset = circumference * (1 - progress);
+
+        circle.style.strokeDasharray = circumference;
+        circle.style.strokeDashoffset = offset;
+        circle.style.stroke = timerState.isBreak ? "#f472b6" : "#64ffda";
+      }
+
+      function startTimer() {
+        if (timerState.isRunning) return;
+
+        timerState.isRunning = true;
+        document.getElementById("startBtn").style.display = "none";
+        document.getElementById("pauseBtn").style.display = "inline-block";
+
+        timerInterval = setInterval(() => {
+          if (timerState.timeRemaining > 0) {
+            timerState.timeRemaining--;
+            if (!timerState.isBreak) {
+              timerState.totalFocusTime++;
+            }
+            updateDisplay();
+            updateStats();
+          } else {
+            completeSession();
+          }
+        }, 1000);
+      }
+
+      function pauseTimer() {
+        timerState.isRunning = false;
+        clearInterval(timerInterval);
+        document.getElementById("startBtn").style.display = "inline-block";
+        document.getElementById("pauseBtn").style.display = "none";
+      }
+
+      function resetTimer() {
+        pauseTimer();
+        timerState.isBreak = false;
+        timerState.timeRemaining = timerState.workTime;
+        updateDisplay();
+      }
+
+      function completeSession() {
+        pauseTimer();
+
+        if (!timerState.isBreak) {
+          timerState.completed++;
+          timerState.streak++;
+          playNotification();
+        }
+
+        timerState.isBreak = !timerState.isBreak;
+        timerState.timeRemaining = timerState.isBreak
+          ? timerState.breakTime
+          : timerState.workTime;
+
+        updateDisplay();
+        updateStats();
+      }
+
+      function updateStats() {
+        document.getElementById("completedCount").textContent =
+          timerState.completed;
+        document.getElementById("totalTime").textContent =
+          Math.floor(timerState.totalFocusTime / 60) + "m";
+        document.getElementById("streak").textContent = timerState.streak;
+      }
+
+      function playNotification() {
+        document.getElementById("timerDisplay").classList.add("pulsing");
+        setTimeout(() => {
+          document.getElementById("timerDisplay").classList.remove("pulsing");
+        }, 2000);
+      }
+
+      document.getElementById("workTime").addEventListener("change", (e) => {
+        timerState.workTime = parseInt(e.target.value) * 60;
+        if (!timerState.isBreak && !timerState.isRunning) {
+          timerState.timeRemaining = timerState.workTime;
+          updateDisplay();
+        }
+      });
+
+      document.getElementById("breakTime").addEventListener("change", (e) => {
+        timerState.breakTime = parseInt(e.target.value) * 60;
+        if (timerState.isBreak && !timerState.isRunning) {
+          timerState.timeRemaining = timerState.breakTime;
+          updateDisplay();
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        initParticles();
+      });
+
+      // Initialize
+      initParticles();
+      animateParticles();
+      updateDisplay();
+      updateStats();
+    </script>
+  </body>
+</html>
