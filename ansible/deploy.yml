@@ -13,11 +13,15 @@
         cmd: docker pull devopsregistry2025.azurecr.io/myapp:v1
 
     - name: Install kubectl
-      ansible.builtin.command:
-        cmd: |
-          sudo apt-get update -y
-          sudo apt-get install -y kubectl
+      ansible.builtin.shell: |
+        sudo apt-get update -y
+        sudo apt-get install -y kubectl
       ignore_errors: yes
+
+    - name: Azure CLI login (using GitHub secret)
+      ansible.builtin.shell: |
+        echo '{{ lookup("env", "AZURE_CREDENTIALS") }}' > creds.json
+        az login --service-principal -u $(jq -r .clientId creds.json) -p $(jq -r .clientSecret creds.json) --tenant $(jq -r .tenantId creds.json)
 
     - name: Get AKS credentials
       ansible.builtin.command:
