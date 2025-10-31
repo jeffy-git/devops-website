@@ -12,6 +12,25 @@
       ansible.builtin.command:
         cmd: docker pull devopsregistry2025.azurecr.io/myapp:v1
 
-    - name: Run Docker container
+    - name: Install kubectl
       ansible.builtin.command:
-        cmd: docker run -d -p 80:80 devopsregistry2025.azurecr.io/myapp:v1
+        cmd: |
+          sudo apt-get update -y
+          sudo apt-get install -y kubectl
+      ignore_errors: yes
+
+    - name: Get AKS credentials
+      ansible.builtin.command:
+        cmd: az aks get-credentials --resource-group devops-rg --name devops-aks --overwrite-existing
+
+    - name: Apply Kubernetes deployment
+      ansible.builtin.command:
+        cmd: kubectl apply -f app/kubernetes/deployment.yaml
+
+    - name: Apply Kubernetes service
+      ansible.builtin.command:
+        cmd: kubectl apply -f app/kubernetes/service.yaml
+
+    - name: Verify deployment
+      ansible.builtin.command:
+        cmd: kubectl get svc
