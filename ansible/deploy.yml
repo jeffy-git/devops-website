@@ -6,28 +6,20 @@
   tasks:
     - name: Log in to Azure
       ansible.builtin.command:
-        cmd: >
-          az login --service-principal
-          -u "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
-          -p "{{ lookup('env', 'AZURE_CLIENT_SECRET') }}"
-          --tenant "{{ lookup('env', 'AZURE_TENANT_ID') }}"
+        cmd: az login --service-principal -u "{{ lookup('env', 'AZURE_CLIENT_ID') }}" -p "{{ lookup('env', 'AZURE_CLIENT_SECRET') }}" --tenant "{{ lookup('env', 'AZURE_TENANT_ID') }}"
 
     - name: Log in to Azure Container Registry
       ansible.builtin.command:
-        cmd: >
-          docker login devopsregistry2025.azurecr.io
-          -u "{{ lookup('env', 'ACR_USERNAME') }}"
-          -p "{{ lookup('env', 'ACR_PASSWORD') }}"
+        cmd: docker login devopsregistry2025.azurecr.io -u "{{ lookup('env', 'ACR_USERNAME') }}" -p "{{ lookup('env', 'ACR_PASSWORD') }}"
 
-    - name: Pull Docker image from Azure Container Registry
+    - name: Pull Docker image from ACR
       ansible.builtin.command:
         cmd: docker pull devopsregistry2025.azurecr.io/myapp:v1
 
     - name: Install kubectl
-      ansible.builtin.command:
-        cmd: |
-          sudo apt-get update -y && sudo apt-get install -y kubectl
-      ignore_errors: yes
+      ansible.builtin.shell: |
+        sudo apt-get update -y
+        sudo apt-get install -y kubectl
 
     - name: Get AKS credentials
       ansible.builtin.command:
@@ -35,4 +27,4 @@
 
     - name: Deploy to AKS
       ansible.builtin.command:
-        cmd: kubectl apply -f app/kubernetes/
+        cmd: kubectl apply -f ./app/kubernetes/
