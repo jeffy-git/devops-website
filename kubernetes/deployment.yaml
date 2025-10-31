@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: devops-app
-          image: devopsregistry2025.azurecr.io/devops-app:v1
+          image: devopsregistry2025.azurecr.io/myapp:v1
           ports:
             - containerPort: 80
 ---
