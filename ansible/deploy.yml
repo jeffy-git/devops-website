@@ -33,8 +33,8 @@
       register: aks_creds
 
     - name: Deploy to AKS
-      ansible.builtin.command:
-        cmd: kubectl apply -f $GITHUB_WORKSPACE/app/kubernetes/
+      ansible.builtin.shell: |
+        kubectl apply -f "{{ lookup('env', 'GITHUB_WORKSPACE') }}/app/kubernetes/"
       register: aks_deploy
 
     - name: Verify Deployment
