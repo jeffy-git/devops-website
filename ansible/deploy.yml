@@ -7,24 +7,41 @@
     - name: Log in to Azure
       ansible.builtin.command:
         cmd: az login --service-principal -u "{{ lookup('env', 'AZURE_CLIENT_ID') }}" -p "{{ lookup('env', 'AZURE_CLIENT_SECRET') }}" --tenant "{{ lookup('env', 'AZURE_TENANT_ID') }}"
+      register: azure_login
+      ignore_errors: no
 
     - name: Log in to Azure Container Registry
       ansible.builtin.command:
         cmd: docker login devopsregistry2025.azurecr.io -u "{{ lookup('env', 'ACR_USERNAME') }}" -p "{{ lookup('env', 'ACR_PASSWORD') }}"
+      register: acr_login
+      ignore_errors: no
 
     - name: Pull Docker image from ACR
       ansible.builtin.command:
         cmd: docker pull devopsregistry2025.azurecr.io/myapp:v1
+      register: docker_pull
 
     - name: Install kubectl
       ansible.builtin.shell: |
-        sudo apt-get update -y
-        sudo apt-get install -y kubectl
+        sudo apt-get update -y && sudo apt-get install -y kubectl
+      register: kubectl_install
+      ignore_errors: yes # Some runners already have kubectl, so don’t fail the job
 
     - name: Get AKS credentials
       ansible.builtin.command:
         cmd: az aks get-credentials --resource-group devops-rg --name devops-aks --overwrite-existing
+      register: aks_creds
 
     - name: Deploy to AKS
       ansible.builtin.command:
-        cmd: kubectl apply -f ./app/kubernetes/
+        cmd: kubectl apply -f $GITHUB_WORKSPACE/app/kubernetes/
+      register: aks_deploy
+
+    - name: Verify Deployment
+      ansible.builtin.command:
+        cmd: kubectl get svc devops-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"
+      register: service_ip
+
+    - name: Show public IP
+      ansible.builtin.debug:
+        msg: "Your app is live at http://{{ service_ip.stdout }}"
