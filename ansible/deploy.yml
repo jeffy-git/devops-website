@@ -34,7 +34,7 @@
 
     - name: Deploy to AKS
       ansible.builtin.shell: |
-        kubectl apply -f "{{ lookup('env', 'GITHUB_WORKSPACE') }}/app/kubernetes/"
+        kubectl apply -f "{{ lookup('env', 'GITHUB_WORKSPACE') }}/kubernetes/"
       register: aks_deploy
 
     - name: Verify Deployment

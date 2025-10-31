@@ -9,34 +9,65 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 🧾 Checkout code
         uses: actions/checkout@v3
 
-      - name: Log in to Azure
+      - name: 🔐 Log in to Azure
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Log in to Azure Container Registry
+      - name: 🐳 Log in to Azure Container Registry
         uses: azure/docker-login@v1
         with:
           login-server: devopsregistry2025.azurecr.io
           username: ${{ secrets.AZURE_ACR_USERNAME }}
           password: ${{ secrets.AZURE_ACR_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: 🏗️ Build and push Docker image
         run: |
           docker build -t devopsregistry2025.azurecr.io/myapp:v1 ./app
           docker push devopsregistry2025.azurecr.io/myapp:v1
 
-      - name: Run Ansible Playbook
+      - name: ⚙️ Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible kubectl jq
+
+      - name: 🚀 Run Ansible Playbook (Deploy to AKS)
         env:
           ACR_USERNAME: ${{ secrets.AZURE_ACR_USERNAME }}
           ACR_PASSWORD: ${{ secrets.AZURE_ACR_PASSWORD }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: ansible-playbook ansible/deploy.yml
+
+      - name: 🧠 Verify Deployment
         run: |
-          sudo apt-get update
-          sudo apt-get install ansible jq -y
-          ansible-playbook ansible/deploy.yml
+          echo "🔍 Verifying deployment..."
+
+          # Show running pods
+          kubectl get pods -o wide
+          echo ""
+
+          # Show service info
+          kubectl get svc
+          echo ""
+
+          echo "🌐 Fetching external IP..."
+          for i in {1..15}; do
+            EXTERNAL_IP=$(kubectl get svc devops-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+            if [ -n "$EXTERNAL_IP" ]; then
+              echo "✅ Application is live at: http://$EXTERNAL_IP"
+              break
+            fi
+            echo "⏳ Waiting for LoadBalancer IP... (attempt $i)"
+            sleep 10
+          done
+
+          if [ -z "$EXTERNAL_IP" ]; then
+            echo "❌ Failed to get external IP. Check AKS service."
+            exit 1
+          fi
