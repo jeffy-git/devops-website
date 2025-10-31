@@ -4,37 +4,35 @@
   become: true
 
   tasks:
+    - name: Log in to Azure
+      ansible.builtin.command:
+        cmd: >
+          az login --service-principal
+          -u "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
+          -p "{{ lookup('env', 'AZURE_CLIENT_SECRET') }}"
+          --tenant "{{ lookup('env', 'AZURE_TENANT_ID') }}"
+
     - name: Log in to Azure Container Registry
       ansible.builtin.command:
-        cmd: docker login devopsregistry2025.azurecr.io -u "{{ lookup('env', 'ACR_USERNAME') }}" -p "{{ lookup('env', 'ACR_PASSWORD') }}"
+        cmd: >
+          docker login devopsregistry2025.azurecr.io
+          -u "{{ lookup('env', 'ACR_USERNAME') }}"
+          -p "{{ lookup('env', 'ACR_PASSWORD') }}"
 
     - name: Pull Docker image from Azure Container Registry
       ansible.builtin.command:
         cmd: docker pull devopsregistry2025.azurecr.io/myapp:v1
 
     - name: Install kubectl
-      ansible.builtin.shell: |
-        sudo apt-get update -y
-        sudo apt-get install -y kubectl
+      ansible.builtin.command:
+        cmd: |
+          sudo apt-get update -y && sudo apt-get install -y kubectl
       ignore_errors: yes
-
-    - name: Azure CLI login (using GitHub secret)
-      ansible.builtin.shell: |
-        echo '{{ lookup("env", "AZURE_CREDENTIALS") }}' > creds.json
-        az login --service-principal -u $(jq -r .clientId creds.json) -p $(jq -r .clientSecret creds.json) --tenant $(jq -r .tenantId creds.json)
 
     - name: Get AKS credentials
       ansible.builtin.command:
         cmd: az aks get-credentials --resource-group devops-rg --name devops-aks --overwrite-existing
 
-    - name: Apply Kubernetes deployment
+    - name: Deploy to AKS
       ansible.builtin.command:
-        cmd: kubectl apply -f app/kubernetes/deployment.yaml
-
-    - name: Apply Kubernetes service
-      ansible.builtin.command:
-        cmd: kubectl apply -f app/kubernetes/service.yaml
-
-    - name: Verify deployment
-      ansible.builtin.command:
-        cmd: kubectl get svc
+        cmd: kubectl apply -f app/kubernetes/
