@@ -33,7 +33,10 @@ jobs:
         env:
           ACR_USERNAME: ${{ secrets.AZURE_ACR_USERNAME }}
           ACR_PASSWORD: ${{ secrets.AZURE_ACR_PASSWORD }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
           sudo apt-get update
-          sudo apt-get install ansible -y
+          sudo apt-get install ansible jq -y
           ansible-playbook ansible/deploy.yml
