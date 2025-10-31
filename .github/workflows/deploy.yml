@@ -46,7 +46,7 @@ jobs:
 
       - name: Set up AKS context
         run: |
-          az aks get-credentials --resource-group devops-rg --name devops-cluster --overwrite-existing
+          az aks get-credentials --resource-group devops-rg --name devops-aks --overwrite-existing
 
       - name: 🧠 Verify Deployment
         run: |
