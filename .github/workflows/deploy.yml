@@ -44,6 +44,10 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: ansible-playbook ansible/deploy.yml
 
+      - name: Set up AKS context
+        run: |
+          az aks get-credentials --resource-group devops-rg --name devops-cluster --overwrite-existing
+
       - name: 🧠 Verify Deployment
         run: |
           echo "🔍 Verifying deployment..."
